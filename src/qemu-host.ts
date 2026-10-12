@@ -5,7 +5,7 @@ export interface QemuSymbolFile {
   path: string;
   offset?: string | number;
 }
-class QemuHost {
+export class QemuHost {
   public constructor(
     public readonly executable: QemuExecutable,
     private readonly symbolFiles: QemuSymbolFile[] = [],

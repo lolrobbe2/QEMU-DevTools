@@ -15,6 +15,18 @@ export interface QemuExecutable {
   endianness: QemuEndianness;
 }
 export class QemuManager {
+  public static GetExecutable(
+    arch: string,
+    endianness: QemuEndianness,
+    type: QemuExecutableType,
+  ): QemuExecutable | undefined {
+    return this.ResolveExecutables().find(
+      (executable) =>
+        executable.arch.toLowerCase() === arch.toLowerCase() &&
+        executable.endianness === endianness &&
+        executable.type === type,
+    );
+  }
   public static ResolveExecutables(): QemuExecutable[] {
     switch (process.platform) {
       case "win32":
