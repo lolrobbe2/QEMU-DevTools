@@ -21,13 +21,73 @@
       {
         "command": "qemu-devtools.helloWorld",
         "title": "Hello World"
+      },
+      {
+        "command": "qemu-devtools.showDisplay",
+        "title": "Show Display"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "qemudbg",
+        "label": "QEMU Debug",
+        "languages": [
+          "c",
+          "cpp"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Debug configuration name"
+              },
+              "symbolFiles": {
+                "type": "array",
+                "description": "Symbol files to load into the debugger.",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "path"
+                  ],
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "description": "Path to the ELF symbol file. Supports VS Code variables such as ${workspaceFolder}."
+                    },
+                    "offset": {
+                      "type": [
+                        "string",
+                        "number"
+                      ],
+                      "description": "Optional symbol relocation offset. If omitted, the ELF entry point will be used."
+                    }
+                  }
+                },
+                "default": []
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "name": "QEMU Debug",
+            "type": "qemudbg",
+            "request": "launch"
+          }
+        ]
       }
     ]
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
-    "compile": "npm run check-types && npm run lint && node esbuild.js",
+    "compile": "npm run check-types && npm run check-webview-types && npm run lint && node esbuild.js && esbuild src/webview.ts --bundle --platform=browser --outfile=out/webview.js",
+    "check-webview-types": "tsc --noEmit --project tsconfig.webview.json",
     "watch": "npm-run-all -p watch:*",
+    "watch:webview": "tsc --noEmit --watch --project tsconfig.webview.json",
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
     "package": "npm run check-types && npm run lint && node esbuild.js --production",
@@ -39,19 +99,22 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.140.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "24.x",
-    "typescript-eslint": "^8.61.1",
-    "eslint": "^10.5.0",
+    "@types/vscode": "^1.140.0",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.0.0",
     "esbuild": "^0.28.1",
+    "eslint": "^10.5.0",
     "npm-run-all": "^4.1.5",
     "typescript": "^6.0.3",
-    "@vscode/test-cli": "^0.0.15",
-    "@vscode/test-electron": "^3.0.0"
+    "typescript-eslint": "^8.61.1"
   },
   "overrides": {
     "diff": "^8.0.4",
     "serialize-javascript": "^7.0.6"
+  },
+  "dependencies": {
+    "@novnc/novnc": "^1.7.0"
   }
 }

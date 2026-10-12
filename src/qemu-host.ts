@@ -10,13 +10,20 @@ export class QemuHost {
     public readonly executable: QemuExecutable,
     private readonly symbolFiles: QemuSymbolFile[] = [],
   ) {}
-  public async Run(): Promise<void> {
+  public async Run(renderInWebview: boolean = false): Promise<void> {
+    const args: string[] = [];
+
+    if (renderInWebview) {
+      args.push("-display", "none");
+      args.push("-vnc", "127.0.0.1:0,websocket=5700");
+    }
+
     const task = new vscode.Task(
       { type: "qemu", executable: this.executable.path },
       vscode.TaskScope.Workspace,
       `QEMU (${this.executable.arch})`,
       "QEMU DevTools",
-      new vscode.ProcessExecution(this.executable.path, []),
+      new vscode.ProcessExecution(this.executable.path, args),
       [],
     );
 
