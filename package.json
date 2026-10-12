@@ -3,13 +3,18 @@
   "displayName": "QEMU DevTools",
   "description": "qemu based developer tools, build in rendering to vscode panels.",
   "version": "0.0.1",
+  "extensionDependencies": [
+    "ms-vscode.cpptools"
+  ],
   "engines": {
     "vscode": "^1.140.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
