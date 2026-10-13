@@ -11,12 +11,17 @@ export class QemuHost {
     private readonly symbolFiles: QemuSymbolFile[] = [],
   ) {}
   public async Run(renderInWebview: boolean = false): Promise<void> {
-    const args: string[] = [];
+    const args: string[] = ["-d", "guest_errors"];
 
     if (renderInWebview) {
-      args.push("-display", "none");
       args.push("-vnc", "127.0.0.1:0,websocket=5700");
     }
+    args.push(
+      "-chardev",
+      "socket,id=serial0,host=127.0.0.1,port=12345,server=on,wait=off",
+      "-serial",
+      "chardev:serial0",
+    );
 
     const task = new vscode.Task(
       { type: "qemu", executable: this.executable.path },

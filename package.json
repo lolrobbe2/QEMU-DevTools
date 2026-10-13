@@ -84,19 +84,16 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
-    "compile": "npm run check-types && npm run check-webview-types && npm run lint && node esbuild.js && esbuild src/webview.ts --bundle --platform=browser --outfile=out/webview.js",
-    "check-webview-types": "tsc --noEmit --project tsconfig.webview.json",
+    "compile": "npm run check-types && npm run lint && node esbuild.js",
     "watch": "npm-run-all -p watch:*",
-    "watch:webview": "tsc --noEmit --watch --project tsconfig.webview.json",
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production && esbuild src/webview.js --bundle --platform=browser --outfile=out/webview.js --minify",
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "check-types": "tsc --noEmit",
-    "lint": "eslint src",
-    "test": "vscode-test"
+    "lint": "eslint src"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",

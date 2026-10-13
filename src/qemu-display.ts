@@ -18,13 +18,13 @@ export class QemuDisplay {
       {
         enableScripts: true,
         localResourceRoots: [
-          vscode.Uri.joinPath(this.context.extensionUri, "out"),
+          vscode.Uri.joinPath(this.context.extensionUri, "dist"),
         ],
       },
     );
 
     const scriptUri = this.panel.webview.asWebviewUri(
-      vscode.Uri.joinPath(this.context.extensionUri, "out", "webview.js"),
+      vscode.Uri.joinPath(this.context.extensionUri, "dist", "webview.js"),
     );
 
     this.panel.webview.html = this.GetHtml(scriptUri);
@@ -45,22 +45,25 @@ export class QemuDisplay {
   >
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    html, body, #screen {
-      width: 100%;
-      height: 100%;
+    html,
+    body {
       margin: 0;
-      overflow: hidden;
-      background: #111;
-    }
-    #screen canvas {
+      padding: 0;
       width: 100%;
       height: 100%;
+      overflow: hidden;
+    }
+
+    #screen {
+      width: 100%;
+      height: 100%;
+      background: #000;
     }
   </style>
 </head>
 <body>
   <div id="screen"></div>
-  <script src="${scriptUri}"></script>
+  <script type="module" src="${scriptUri}"></script>
 </body>
 </html>`;
   }

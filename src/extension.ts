@@ -37,7 +37,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const executable: QemuExecutable = QemuManager.GetExecutable(
     "x86_64",
     QemuEndianness.BigEndian,
-    QemuExecutableType.Console,
+    QemuExecutableType.WindowsGui,
   )!;
   const host = new QemuHost(executable);
   await host.Run(true);

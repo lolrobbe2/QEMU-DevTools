@@ -1,12 +1,12 @@
-import RFB from "@novnc/novnc/core/rfb.js";
+import RFB from "@novnc/novnc";
 
+const screen = document.getElementById("screen");
 
-const screen = document.getElementById("screen")!;
+if (!screen) {
+  throw new Error('Element "#screen" not found');
+}
 
-const rfb = new RFB(
-  screen,
-  "ws://127.0.0.1:5700",
-);
+const rfb = new RFB(screen, "ws://127.0.0.1:5700");
 
 rfb.scaleViewport = true;
 rfb.resizeSession = false;
@@ -16,7 +16,7 @@ rfb.addEventListener("connect", () => {
   console.log("Connected to QEMU display");
 });
 
-rfb.addEventListener("disconnect", (event: CustomEvent) => {
+rfb.addEventListener("disconnect", (event) => {
   console.log("QEMU display disconnected", event.detail);
 });
 
