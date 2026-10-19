@@ -1,28 +1,53 @@
 import { QemuEndianness, QemuExecutable } from "./qemu-manager";
 import * as fs from "node:fs/promises";
 import * as vscode from "vscode";
+import { QemuDebugConfiguration } from "./debug/configuration";
+import { QemuDrive } from "./qemu-drive";
 export interface QemuSymbolFile {
   path: string;
   offset?: string | number;
 }
-export class QemuHost {
+export class QemuHost implements vscode.Disposable {
+  private taskExecution: vscode.TaskExecution | undefined;
+  private disposed: boolean = false;
+
   public constructor(
     public readonly executable: QemuExecutable,
-    private readonly symbolFiles: QemuSymbolFile[] = [],
+    private readonly configuration: QemuDebugConfiguration,
   ) {}
-  public async Run(renderInWebview: boolean = false): Promise<void> {
-    const args: string[] = ["-d", "guest_errors"];
 
+  public dispose(): void {
+    if (this.disposed) {
+      return;
+    }
+
+    this.disposed = true;
+
+    this.taskExecution?.terminate();
+    this.taskExecution = undefined;
+  }
+  public async Run(renderInWebview: boolean = false): Promise<void> {
+    if (this.disposed) {
+      throw new Error("Cannot run a disposed QemuHost.");
+    }
+
+    if (this.taskExecution !== undefined) {
+      throw new Error("QEMU is already running.");
+    }
+
+    const args: string[] = [
+      "-d",
+      "guest_errors",
+      "-serial",
+      "stdio",
+      "-gdb",
+      `tcp:${this.configuration.debuggerServerAddress ?? "localhost:1234"}`,
+      "-S",
+    ];
     if (renderInWebview) {
       args.push("-vnc", "127.0.0.1:0,websocket=5700");
     }
-    args.push(
-      "-chardev",
-      "socket,id=serial0,host=127.0.0.1,port=12345,server=on,wait=off",
-      "-serial",
-      "chardev:serial0",
-    );
-
+    args.push(...this.BuildDriveArguments(this.configuration.drives ?? []));
     const task = new vscode.Task(
       { type: "qemu", executable: this.executable.path },
       vscode.TaskScope.Workspace,
@@ -37,78 +62,38 @@ export class QemuHost {
       panel: vscode.TaskPanelKind.Dedicated,
       clear: true,
     };
+    const execution: vscode.TaskExecution =
+      await vscode.tasks.executeTask(task);
 
-    await vscode.tasks.executeTask(task);
-  }
-  public async ResolveSymbolCommands(): Promise<string[]> {
-    return Promise.all(
-      this.symbolFiles.map(async (symbol) => {
-        const offset =
-          symbol.offset ?? (await this.ReadElfEntryPoint(symbol.path));
-
-        return `add-symbol-file "${symbol.path}" -o 0x${BigInt(offset).toString(16)}`;
-      }),
-    );
-  }
-
-  private async ReadElfEntryPoint(filePath: string): Promise<bigint> {
-    const file = await fs.open(filePath, "r");
-
-    try {
-      const header = Buffer.alloc(64);
-      const { bytesRead } = await file.read(header, 0, 64, 0);
-
-      if (
-        bytesRead < 52 ||
-        header[0] !== 0x7f ||
-        header[1] !== 0x45 ||
-        header[2] !== 0x4c ||
-        header[3] !== 0x46
-      ) {
-        throw new Error(`Invalid or truncated ELF file: ${filePath}`);
-      }
-
-      const elfClass = header[4]; // 1 = ELF32, 2 = ELF64
-      const dataEncoding = header[5]; // 1 = little-endian, 2 = big-endian
-
-      if (elfClass !== 1 && elfClass !== 2) {
-        throw new Error(`Unsupported ELF class: ${elfClass}`);
-      }
-
-      if (dataEncoding !== 1 && dataEncoding !== 2) {
-        throw new Error(`Unsupported ELF byte order: ${dataEncoding}`);
-      }
-
-      const elfEndianness =
-        dataEncoding === 1
-          ? QemuEndianness.LittleEndian
-          : QemuEndianness.BigEndian;
-
-      if (elfEndianness !== this.executable.endianness) {
-        throw new Error(
-          `ELF endianness mismatch for "${filePath}": ` +
-            `expected ${QemuEndianness[this.executable.endianness]}, ` +
-            `got ${QemuEndianness[elfEndianness]}`,
-        );
-      }
-
-      const littleEndian = dataEncoding === 1;
-
-      if (elfClass === 1) {
-        return BigInt(
-          littleEndian ? header.readUInt32LE(24) : header.readUInt32BE(24),
-        );
-      }
-
-      if (bytesRead < 64) {
-        throw new Error(`Truncated ELF64 header: ${filePath}`);
-      }
-
-      return littleEndian
-        ? header.readBigUInt64LE(24)
-        : header.readBigUInt64BE(24);
-    } finally {
-      await file.close();
+    if (this.disposed) {
+      execution.terminate();
+      return;
     }
+
+    this.taskExecution = execution;
+  }
+  private BuildDriveArguments(drives: QemuDrive[]): string[] {
+    const args: string[] = [];
+
+    for (const drive of drives) {
+      const options: string[] = [
+        `if=${drive.interface}`,
+        `format=${drive.format}`,
+      ];
+
+      if (drive.readonly) {
+        options.push("readonly=on");
+      }
+
+      if (drive.fat) {
+        options.push(`file=fat:rw:${drive.file}`);
+      } else {
+        options.push(`file=${drive.file}`);
+      }
+
+      args.push("-drive", options.join(","));
+    }
+
+    return args;
   }
 }

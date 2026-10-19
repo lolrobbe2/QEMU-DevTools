@@ -9,6 +9,8 @@ import {
 } from "./qemu-manager";
 import { QemuHost } from "./qemu-host";
 import { QemuDisplay } from "./qemu-display";
+import { QemuDebugConfigurationProvider } from "./debug/provider";
+import { QemuDebugAdapterDescriptorFactory } from "./debug/adapter";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -21,27 +23,21 @@ export async function activate(context: vscode.ExtensionContext) {
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
-  const disposable = vscode.commands.registerCommand(
-    "qemu-devtools.helloWorld",
-    () => {
-      // The code you place here will be executed every time your command is executed
-      // Display a message box to the user
-      vscode.window.showInformationMessage("Hello World from QEMU DevTools!");
-    },
-  );
   context.subscriptions.push(
     vscode.commands.registerCommand("qemu-devtools.showDisplay", () => {
       display.Show();
     }),
   );
-  const executable: QemuExecutable = QemuManager.GetExecutable(
-    "x86_64",
-    QemuEndianness.BigEndian,
-    QemuExecutableType.WindowsGui,
-  )!;
-  const host = new QemuHost(executable);
-  await host.Run(true);
-  context.subscriptions.push(disposable);
+  context.subscriptions.push(
+    vscode.debug.registerDebugConfigurationProvider(
+      "qemudbg",
+      new QemuDebugConfigurationProvider(),
+    ),
+    vscode.debug.registerDebugAdapterDescriptorFactory(
+      "qemudbg",
+      new QemuDebugAdapterDescriptorFactory(),
+    ),
+  );
 }
 
 // This method is called when your extension is deactivated

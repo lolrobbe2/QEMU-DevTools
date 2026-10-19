@@ -40,7 +40,7 @@ async function main() {
 			format: "cjs",
 			platform: "node",
 			outfile: "dist/extension.js",
-			external: ["vscode"],
+			external: ["vscode",'node-lief'],
 		}),
 
 		esbuild.context({
