@@ -1,12 +1,12 @@
 import RFB from "@novnc/novnc";
 
 const screen = document.getElementById("screen");
-
+const port = screen.getAttribute("port");
 if (!screen) {
   throw new Error('Element "#screen" not found');
 }
 
-const rfb = new RFB(screen, "ws://127.0.0.1:5700");
+const rfb = new RFB(screen, `ws://127.0.0.1:${port}`);
 
 rfb.scaleViewport = true;
 rfb.resizeSession = false;

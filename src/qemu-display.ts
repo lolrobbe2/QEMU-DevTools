@@ -3,7 +3,12 @@ import * as vscode from "vscode";
 export class QemuDisplay {
   private panel?: vscode.WebviewPanel;
 
-  constructor(private readonly context: vscode.ExtensionContext) {}
+  constructor(
+    private readonly context: vscode.ExtensionContext,
+    private readonly architecture: string, 
+    private readonly session: vscode.DebugSession,
+    private readonly port: string
+  ) {}
 
   public Show(): void {
     if (this.panel) {
@@ -13,7 +18,7 @@ export class QemuDisplay {
 
     this.panel = vscode.window.createWebviewPanel(
       "qemuDisplay",
-      "QEMU Display",
+      `QEMU (${this.architecture}) (${this.session.id})`,
       vscode.ViewColumn.One,
       {
         enableScripts: true,
@@ -31,9 +36,12 @@ export class QemuDisplay {
 
     this.panel.onDidDispose(() => {
       this.panel = undefined;
+      vscode.debug.stopDebugging(this.session);
     });
   }
-
+  public Dispose() {
+    this.panel?.dispose();
+  }
   private GetHtml(scriptUri: vscode.Uri): string {
     return `<!DOCTYPE html>
 <html>
@@ -62,7 +70,7 @@ export class QemuDisplay {
   </style>
 </head>
 <body>
-  <div id="screen"></div>
+  <div id="screen" port=${this.port}></div>
   <script type="module" src="${scriptUri}"></script>
 </body>
 </html>`;

@@ -9,18 +9,21 @@ import {
 } from "../qemu-manager";
 import { QemuDebugSession } from "./session";
 import LIEF from "node-lief";
+import { QemuDisplay } from "../qemu-display";
 
 export class QemuDebugAdapterDescriptorFactory
   implements vscode.DebugAdapterDescriptorFactory
 {
   private readonly sessions: Map<string, QemuDebugSession> = new Map();
-
+  private readonly displaySessions: Map<string, QemuDisplay> = new Map();
+  public constructor(private readonly context: vscode.ExtensionContext) {
+  }
   public async createDebugAdapterDescriptor(
     session: vscode.DebugSession,
     executable: vscode.DebugAdapterExecutable | undefined,
   ): Promise<vscode.ProviderResult<vscode.DebugAdapterDescriptor>> {
     const config = session.configuration as QemuDebugConfiguration;
-
+    
     const qemuHost: QemuHost = new QemuHost(
       QemuManager.GetExecutable(
         config.architeture ?? "x86_64",
