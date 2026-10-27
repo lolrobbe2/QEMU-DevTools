@@ -6,7 +6,12 @@ export interface QemuSymbolFile {
   path: string;
   offset?: string | number;
 }
+export type QemuDeviceProperty = string | number | boolean;
 
+export interface QemuDevice {
+  driver: string;
+  properties?: Record<string, QemuDeviceProperty>;
+}
 export interface QemuDebugConfiguration extends vscode.DebugConfiguration {
   program: string;
   cwd?: string;
@@ -19,4 +24,5 @@ export interface QemuDebugConfiguration extends vscode.DebugConfiguration {
   endianness?: QemuEndianness;
   drives?: QemuDrive[];
   sourcePath?: string; 
+  devices?: QemuDevice[];
 }

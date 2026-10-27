@@ -19,10 +19,6 @@
   "contributes": {
     "commands": [
       {
-        "command": "qemu-devtools.helloWorld",
-        "title": "Hello World"
-      },
-      {
         "command": "qemu-devtools.showDisplay",
         "title": "Show Display"
       }
@@ -38,7 +34,8 @@
         "configurationAttributes": {
           "launch": {
             "required": [
-              "name"
+              "name",
+              "program"
             ],
             "properties": {
               "program": {
@@ -120,6 +117,10 @@
                 "default": "${workspaceFolder}",
                 "description": "Local source path used for GDB source path substitution."
               },
+              "embbededDisplay":{
+                "type": "boolean",
+                "description": "When set to true qemu will be rendered inside a vscode tab."
+              },
               "drives": {
                 "type": "array",
                 "description": "Drives to attach to the QEMU virtual machine.",
@@ -176,6 +177,34 @@
                     }
                   }
                 }
+              },
+              "devices": {
+                "type": "array",
+                "description": "QEMU devices to create.",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "driver"
+                  ],
+                  "properties": {
+                    "driver": {
+                      "type": "string",
+                      "description": "QEMU device model, for example virtio-net-pci."
+                    },
+                    "properties": {
+                      "type": "object",
+                      "description": "Device-specific QEMU properties.",
+                      "additionalProperties": {
+                        "type": [
+                          "string",
+                          "number",
+                          "boolean"
+                        ]
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
               }
             }
           }
@@ -184,7 +213,8 @@
           {
             "name": "QEMU Debug",
             "type": "qemudbg",
-            "request": "launch"
+            "request": "launch",
+            "embbededDisplay": false
           }
         ]
       }

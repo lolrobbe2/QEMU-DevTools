@@ -58,4 +58,7 @@ export class QemuDebugAdapterDescriptorFactory
       cwd: config.cwd,
     });
   }
+  public disposeSession(session :vscode.DebugSession){
+    this.sessions.get(session.id)?.dispose();
+  }
 }

@@ -1,7 +1,7 @@
 import { QemuEndianness, QemuExecutable } from "./qemu-manager";
 import * as fs from "node:fs/promises";
 import * as vscode from "vscode";
-import { QemuDebugConfiguration } from "./debug/configuration";
+import { QemuDebugConfiguration, QemuDevice } from "./debug/configuration";
 import { QemuDrive } from "./qemu-drive";
 export interface QemuSymbolFile {
   path: string;
@@ -48,6 +48,8 @@ export class QemuHost implements vscode.Disposable {
       args.push("-vnc", "127.0.0.1:0,websocket=5700");
     }
     args.push(...this.BuildDriveArguments(this.configuration.drives ?? []));
+    args.push(...this.BuildDeviceArguments(this.configuration.devices ?? []));
+    
     const task = new vscode.Task(
       { type: "qemu", executable: this.executable.path },
       vscode.TaskScope.Workspace,
@@ -94,6 +96,33 @@ export class QemuHost implements vscode.Disposable {
       args.push("-drive", options.join(","));
     }
 
+    return args;
+  }
+  private BuildDeviceArguments(
+    devices: QemuDevice[],
+  ): string[] {
+    const args: string[] = [];
+
+    for (const device of devices) {
+      const options: string[] = [device.driver];
+
+      for (const [key, value] of Object.entries(device.properties ?? {})) {
+        let formattedValue: string;
+
+        if (typeof value === "boolean") {
+          formattedValue = value ? "on" : "off";
+        } else {
+          formattedValue = String(value);
+        }
+
+        // QEMU requires commas inside option values to be doubled.
+        formattedValue = formattedValue.replace(/,/g, ",,");
+
+        options.push(`${key}=${formattedValue}`);
+      }
+
+      args.push("-device", options.join(","));
+    }
     return args;
   }
 }

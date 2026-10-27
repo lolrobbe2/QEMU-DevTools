@@ -1,4 +1,6 @@
 import { execFileSync } from "node:child_process";
+import { accessSync, constants, readdirSync, statSync } from "node:fs";
+import * as path from "node:path";
 export enum QemuExecutableType {
   Console = 1 << 0,
   WindowsGui = 1 << 1,
@@ -85,12 +87,84 @@ export class QemuManager {
     }
   }
   private static ResolveExecutablesLinux(): QemuExecutable[] {
-    // TODO: Implement Linux executable discovery.
-    return [];
+    return this.ResolveExecutablesUnix([
+      "/opt/homebrew/bin", /* Homebrew on Apple Silicon */
+      "/usr/local/bin", /* Homebrew on Intel Macs */
+      "/opt/local/bin", /* MacPorts*/
+    ]);
   }
 
   private static ResolveExecutablesMacOS(): QemuExecutable[] {
-    // TODO: Implement macOS executable discovery.
-    return [];
+    return this.ResolveExecutablesUnix([
+      "/opt/homebrew/bin", /* Homebrew on Apple Silicon */
+      "/usr/local/bin", /* Homebrew on Intel Macs */
+      "/opt/local/bin", /* MacPorts*/
+    ]);
+  }
+
+  private static ResolveExecutablesUnix(
+    extraDirectories: string[] = [],
+  ): QemuExecutable[] {
+    const searchDirectories = [
+      ...new Set([
+        ...(process.env.PATH ?? "")
+          .split(path.delimiter)
+          .map((directory) => directory || process.cwd()),
+        ...extraDirectories,
+      ]),
+    ];
+
+    const seenPaths = new Set<string>();
+    const executables: QemuExecutable[] = [];
+
+    for (const directory of searchDirectories) {
+      let entries: string[];
+
+      try {
+        entries = readdirSync(directory);
+      } catch {
+        continue;
+      }
+
+      for (const fileName of entries) {
+        const match = fileName.match(/^qemu-system-(.+)$/i);
+
+        if (!match) {
+          continue;
+        }
+
+        const fullPath = path.resolve(directory, fileName);
+
+        if (seenPaths.has(fullPath)) {
+          continue;
+        }
+
+        try {
+          if (!statSync(fullPath).isFile()) {
+            continue;
+          }
+
+          accessSync(fullPath, constants.X_OK);
+        } catch {
+          continue;
+        }
+
+        seenPaths.add(fullPath);
+
+        const arch = match[1];
+        const isLittleEndian = /el$/i.test(arch);
+
+        executables.push({
+          path: fullPath,
+          arch: arch.replace(/el$/i, ""),
+          type: QemuExecutableType.Console,
+          endianness: isLittleEndian
+            ? QemuEndianness.LittleEndian
+            : QemuEndianness.BigEndian,
+        });
+      }
+    }
+
+    return executables;
   }
 }

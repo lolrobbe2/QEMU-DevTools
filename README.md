@@ -1,71 +1,115 @@
 # qemu-devtools README
 
-This is the README for your extension "qemu-devtools". After writing up a brief description, we recommend including the following sections.
-
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- qemu executable detection
 
-For example if there is an image subfolder under your extension project workspace:
+## QEMU Debug
 
-\!\[feature X\]\(images/feature-x.png\)
+The **QEMU Debug** configuration allows you to debug C and C++ applications running in a QEMU virtual machine. It supports configurable target architectures, GDB connections, symbol files, virtual drives, and custom devices.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+### Configuration
 
-## Requirements
+Create a `launch.json` file in your `.vscode` folder and configure the debugger using the following properties.
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `name` | `string` | Required | Name of the debug configuration. |
+| `program` | `string` | Required | Path to the executable being debugged. |
+| `cwd` | `string` | `${workspaceFolder}` | Working directory for the debug session. |
+| `architeture` | `string` | `x86_64` | Target architecture. |
+| `stopAtEntry` | `boolean` | — | Stop execution at the entry point. |
+| `debuggerServerAddress` | `string` | `localhost:1234` | Address of the debugger server. |
+| `executableType` | `number` | `1` | Executable type: `1` for console, `2` for Windows GUI. |
+| `endianness` | `number` | `2` | Target byte order: `1` for big-endian, `2` for little-endian. |
+| `symbolFiles` | `array` | `[]` | Additional ELF symbol files to load. |
+| `sourcePath` | `string` | `${workspaceFolder}` | Local source path for GDB source mapping. |
+| `embbededDisplay` | `boolean` | — | Render QEMU inside a VS Code tab when enabled. |
+| `drives` | `array` | `[]` | Virtual drives to attach to the VM. |
+| `devices` | `array` | — | Additional QEMU devices to create. |
 
-## Extension Settings
+### Example Configuration
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+A minimal configuration for debugging a C or C++ executable:
 
-For example:
+```json
+{
+    "name": "QEMU Debug",
+    "type": "qemudbg",
+    "request": "launch",
+    "program": "${workspaceFolder}/build/kernel.elf",
+    "cwd": "${workspaceFolder}",
+    "architeture": "x86_64",
+    "stopAtEntry": true,
+    "debuggerServerAddress": "localhost:1234",
+    "embbededDisplay": false
+}
+```
 
-This extension contributes the following settings:
+### Symbol Files
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+The `symbolFiles` property allows additional ELF symbol files to be loaded. Each entry requires a `path` and optionally accepts an `offset` for symbol relocation.
 
-## Known Issues
+```json
+"symbolFiles": [
+    {
+        "path": "${workspaceFolder}/build/kernel.elf",
+        "offset": "0x100000"
+    }
+]
+```
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+If `offset` is omitted, the ELF entry point is used.
 
-## Release Notes
+### Virtual Drives
 
-Users appreciate release notes as you update your extension.
+Use `drives` to attach disk images or FAT directories to the virtual machine.
 
-### 1.0.0
+Each drive requires:
 
-Initial release of ...
+- `interface`: Drive interface, such as `virtio`, `ide`, or `scsi`.
+- `format`: Image format, such as `raw` or `qcow2`.
+- `file`: Path to the disk image or FAT directory.
 
-### 1.0.1
+Optional properties:
 
-Fixed issue #.
+- `readonly`: Attach the drive as read-only.
+- `fat`: Treat the specified directory as a FAT drive.
 
-### 1.1.0
+### Custom Devices
 
-Added features X, Y, and Z.
+Use `devices` to create additional QEMU devices.
+
+Each device requires a `driver` and optionally accepts device-specific `properties`.
+
+```json
+"devices": [
+    {
+        "driver": "virtio-net-pci",
+        "properties": {
+            "disable-legacy": true
+        }
+    }
+]
+```
+
+### Initial Configuration
+
+The extension provides a default configuration:
+
+```json
+{
+    "name": "QEMU Debug",
+    "type": "qemudbg",
+    "request": "launch",
+    "embbededDisplay": false
+}
+```
+
+Add the `program` property before starting a debugging session, as it is required.
 
 ---
 
-## Following extension guidelines
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
 
 **Enjoy!**

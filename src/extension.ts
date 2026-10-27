@@ -11,6 +11,7 @@ import { QemuHost } from "./qemu-host";
 import { QemuDisplay } from "./qemu-display";
 import { QemuDebugConfigurationProvider } from "./debug/provider";
 import { QemuDebugAdapterDescriptorFactory } from "./debug/adapter";
+import { QemuDebugSession } from "./debug/session";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -19,7 +20,7 @@ export async function activate(context: vscode.ExtensionContext) {
   // This line of code will only be executed once when your extension is activated
   console.log('Congratulations, your extension "qemu-devtools" is now active!');
   const display = new QemuDisplay(context);
-
+  const qemuDebugAdapterDescriptorFactory = new QemuDebugAdapterDescriptorFactory();
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
@@ -35,8 +36,13 @@ export async function activate(context: vscode.ExtensionContext) {
     ),
     vscode.debug.registerDebugAdapterDescriptorFactory(
       "qemudbg",
-      new QemuDebugAdapterDescriptorFactory(),
+      qemuDebugAdapterDescriptorFactory,
     ),
+    vscode.debug.onDidTerminateDebugSession((session: vscode.DebugSession) => {
+        if (session.type === "qemudbg") {
+          qemuDebugAdapterDescriptorFactory.disposeSession(session);
+        }
+    })
   );
 }
 
