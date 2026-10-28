@@ -14,6 +14,8 @@ export class QemuHost implements vscode.Disposable {
   public constructor(
     public readonly executable: QemuExecutable,
     private readonly configuration: QemuDebugConfiguration,
+    private readonly gdbPort: number,
+    private readonly displayPort: number
   ) {}
 
   public dispose(): void {
@@ -41,11 +43,11 @@ export class QemuHost implements vscode.Disposable {
       "-serial",
       "stdio",
       "-gdb",
-      `tcp:${this.configuration.debuggerServerAddress ?? "localhost:1234"}`,
+      `tcp:${this.configuration.debuggerServerAddress ?? `localhost:${this.gdbPort}`}`,
       "-S",
     ];
     if (renderInWebview) {
-      args.push("-vnc", "127.0.0.1:0,websocket=5700");
+      args.push("-vnc", `127.0.0.1:0,websocket=${this.displayPort}`);
     }
     args.push(...this.BuildDriveArguments(this.configuration.drives ?? []));
     args.push(...this.BuildDeviceArguments(this.configuration.devices ?? []));

@@ -14,9 +14,9 @@ export interface QemuDevice {
 }
 export interface QemuDebugConfiguration extends vscode.DebugConfiguration {
   program: string;
-  cwd?: string;
+  cwd: string;
   name: string;
-  architeture?: string;
+  architecture: string;
   stopAtEntry?: boolean;
   debuggerServerAddress?: string;
   symbolFiles?: QemuSymbolFile[];
@@ -25,4 +25,5 @@ export interface QemuDebugConfiguration extends vscode.DebugConfiguration {
   drives?: QemuDrive[];
   sourcePath?: string; 
   devices?: QemuDevice[];
+  embeddedDisplay: boolean;
 }

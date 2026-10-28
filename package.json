@@ -34,8 +34,7 @@
         "configurationAttributes": {
           "launch": {
             "required": [
-              "name",
-              "program"
+              "name"
             ],
             "properties": {
               "program": {
@@ -117,9 +116,10 @@
                 "default": "${workspaceFolder}",
                 "description": "Local source path used for GDB source path substitution."
               },
-              "embbededDisplay":{
+              "embeddedDisplay":{
                 "type": "boolean",
-                "description": "When set to true qemu will be rendered inside a vscode tab."
+                "description": "When set to true qemu will be rendered inside a vscode tab.",
+                "default" : true
               },
               "drives": {
                 "type": "array",
@@ -214,7 +214,7 @@
             "name": "QEMU Debug",
             "type": "qemudbg",
             "request": "launch",
-            "embbededDisplay": false
+            "embeddedDisplay": false
           }
         ]
       }

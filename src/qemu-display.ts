@@ -7,7 +7,7 @@ export class QemuDisplay {
     private readonly context: vscode.ExtensionContext,
     private readonly architecture: string, 
     private readonly session: vscode.DebugSession,
-    private readonly port: string
+    private readonly port: number
   ) {}
 
   public Show(): void {
